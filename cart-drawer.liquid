@@ -1,0 +1,116 @@
+<!-- Progress Bar Section -->
+<style>
+  .progress-container {
+    padding: 15px;
+    border: 1px solid #e1e1e1;
+    border-radius: 8px;
+    margin: 15px 0;
+    background: #f9f9f9;
+    display: block;
+  }
+
+  .progress-text {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #e1e1e1;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease-in-out;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0%;
+  }
+  .progress-bar:empty {
+    display: block !important;
+  }
+
+  .free-item-earned {
+    background-color: #f0f9f0;
+    border: 1px solid #4CAF50;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    text-align: center;
+    display: none;
+  }
+
+  .progress-container:empty {
+    display: block !important;
+  }
+</style>
+
+<div class="progress-container" id="free-item-progress">
+  <div class="progress-text" id="progress-text">
+    Laddar...
+  </div>
+
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+
+  <div class="free-item-earned" id="free-item-message">
+    🎉 Grattis! Ett gratis boosterpack kommer skickas med din order!
+  </div>
+</div>
+
+<script>
+  class ProgressBar extends HTMLElement {
+    constructor() {
+      super();
+      this.targetAmount = 500;
+      this.progressBar = document.getElementById('progress-bar');
+      this.progressText = document.getElementById('progress-text');
+      this.freeItemMessage = document.getElementById('free-item-message');
+      this.progressContainer = document.getElementById('free-item-progress');
+
+      this.progressContainer.style.display = 'block';
+
+      document.addEventListener('cart:refresh', this.updateProgress.bind(this));
+      document.addEventListener('cart:update', this.updateProgress.bind(this));
+
+      this.updateProgress();
+    }
+
+    updateProgress() {
+      fetch('/cart.js')
+        .then(response => response.json())
+        .then(cart => {
+          const currentAmount = Math.floor(cart.total_price / 100);
+          let progressPercentage = (currentAmount / this.targetAmount) * 100;
+          progressPercentage = Math.min(progressPercentage, 100);
+
+          this.progressBar.style.width = `${progressPercentage}%`;
+
+          if (currentAmount >= this.targetAmount) {
+            this.progressText.textContent = `Du har uppnått ${this.targetAmount} kr!`;
+            this.freeItemMessage.style.display = 'block';
+          } else {
+            const remaining = this.targetAmount - currentAmount;
+            this.progressText.textContent = `Handla för ${remaining} kr mer för att få ett gratis boosterpack!`;
+            this.freeItemMessage.style.display = 'none';
+          }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+  }
+
+  customElements.define('progress-bar-tracker', ProgressBar);
+</script>
+
+<progress-bar-tracker>
+  <!-- Rör ej! -->
+</progress-bar-tracker>
+<!-- End Progress Bar Section -->
